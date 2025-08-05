@@ -9,11 +9,11 @@ Arduino adapted for TinyGo.
 
 ## Installation
 
-Include `import "github/domi413/sevseg"` in your TinyGo project. and run the following commands to set up the module:
+Include `import "github.com/domi413/sevseg"` in your TinyGo project and run the following commands to set up the module:
 
 ```bash
 go mod init {your-project} # May already be done
-go get github.com/domi413/SevSeg
+go get github.com/domi413/sevseg@v0.1.1
 ```
 
 ## Hardware Setup
@@ -56,10 +56,10 @@ import (
 
 func main() {
 	displayConfig := sevseg.Config{
-		Hardware: sevseg.CommonAnode,
+		Hardware: sevseg.CommonCathode,
 		DigitPins: []machine.Pin{
-			machine.D2,
 			machine.D3,
+			machine.D2,
 		},
 		SegmentPins: []machine.Pin{
 			machine.D4,  // A

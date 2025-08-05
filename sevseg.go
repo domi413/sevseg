@@ -97,7 +97,7 @@ func NewSevSeg(cfg Config) (*SevSeg, bool) {
 		return nil, false
 	}
 
-	if len(cfg.SegmentPins) < 7 {
+	if len(cfg.SegmentPins) < 7 || len(cfg.SegmentPins) > 8 {
 		return nil, false
 	}
 
