@@ -4,13 +4,15 @@ A comprehensive TinyGo library for controlling multiplexed 7-segment displays
 with support for both common-anode and common-cathode configurations.
 
 This library is inspired by the popular
-[SevSeg](https://github.com/DeanIsMe/SevSeg/blob/master/SevSeg.h) library for
+[SevSeg](https://github.com/DeanIsMe/SevSeg/) library for
 Arduino adapted for TinyGo.
 
 ## Installation
 
+Include `import "github/domi413/sevseg"` in your TinyGo project. and run the following commands to set up the module:
+
 ```bash
-go mod init {your-project}
+go mod init {your-project} # May already be done
 go get github.com/domi413/SevSeg
 ```
 
