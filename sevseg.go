@@ -1,3 +1,5 @@
+//go:build tinygo
+
 // Package sevseg is a library for controlling 7-segment displays.
 package sevseg
 
