@@ -24,4 +24,6 @@ go.work.sum
 # Editors
 .idea
 .vscode
-# .zed
+.zed
+
+.golangci.yaml
