@@ -157,7 +157,7 @@ func (s *SevSeg) DisplayTest(delayMS uint16) {
 				time.Sleep(time.Millisecond)
 			}
 
-			s.updatedDisplay[i] = s.getSegmentCode(36) // Blank
+			s.updatedDisplay[i] = s.getSegmentCode(36) // BLANK
 		}
 	}
 }
@@ -174,7 +174,7 @@ func (s *SevSeg) Toggle(enable bool) {
 // Clear clears the display by setting all segments to blank.
 func (s *SevSeg) Clear() {
 	for i := range s.updatedDisplay {
-		s.updatedDisplay[i] = s.getSegmentCode(36) // Blank space
+		s.updatedDisplay[i] = s.getSegmentCode(36) // BLANK
 	}
 }
 
@@ -241,19 +241,19 @@ func (s *SevSeg) SetNumber(number int32) bool {
 
 	position := 0
 	if number == 0 {
-		s.updatedDisplay[len(s.digitPins)-1-position] = s.getSegmentCode(0) // Zero
+		s.updatedDisplay[position] = s.getSegmentCode(0) // ZERO
 	} else {
 		for number > 0 && position < len(s.digitPins) {
-			digit := uint8(number) % 10
-			s.updatedDisplay[len(s.digitPins)-1-position] = s.getSegmentCode(digit)
+			digit := uint8(number % 10)
+			s.updatedDisplay[position] = s.getSegmentCode(digit)
 			number /= 10
 
 			position++
 		}
 	}
 
-	if isNegative && position < len(s.digitPins) {
-		s.updatedDisplay[len(s.digitPins)-1-position] = s.getSegmentCode(37) // Minus
+	if isNegative {
+		s.updatedDisplay[position] = s.getSegmentCode(37) // MINUS
 	}
 
 	return true
@@ -262,6 +262,10 @@ func (s *SevSeg) SetNumber(number int32) bool {
 // SetNumberFloat takes a float number as argument and displays it with a
 // specified number of decimal places.
 func (s *SevSeg) SetNumberFloat(number float32, decimalPlaces uint8) bool {
+	if decimalPlaces <= 0 {
+		return false
+	}
+
 	scale := int32(1)
 	for range decimalPlaces {
 		scale *= 10
@@ -269,14 +273,8 @@ func (s *SevSeg) SetNumberFloat(number float32, decimalPlaces uint8) bool {
 
 	scaled := int32(number * float32(scale))
 
-	if decimalPlaces > 0 && int32(len(s.digitPins)) > int32(number)*10 {
-		if !s.SetNumberWithDecimal(scaled, decimalPlaces) {
-			return false
-		}
-	} else {
-		if !s.SetNumber(scaled) {
-			return false
-		}
+	if !s.SetNumberWithDecimal(scaled, decimalPlaces) {
+		return false
 	}
 
 	return true
@@ -285,25 +283,31 @@ func (s *SevSeg) SetNumberFloat(number float32, decimalPlaces uint8) bool {
 // SetNumberWithDecimal sets the number to be displayed, including a decimal
 // point at a specified position.
 //
-// decimalPointPlace specifies the position of the decimal point from right to
+// decimalPointPosition specifies the position of the decimal point from right to
 // left since the LSB is the right most digit.
 //
-// E.g. for a 4-digit display, decimalPointPlace = 1 would look like this: 000.0
-func (s *SevSeg) SetNumberWithDecimal(number int32, decimalPoint uint8) bool {
-	return s.SetNumberWithMultipleDecimals(number, []uint8{decimalPoint})
+// E.g. for a 4-digit display, decimalPointPosition = 1 would look like this: 000.0
+func (s *SevSeg) SetNumberWithDecimal(number int32, decimalPointPosition uint8) bool {
+	return s.SetNumberWithMultipleDecimals(number, []uint8{decimalPointPosition})
 }
 
 // SetNumberWithMultipleDecimals sets the number to be displayed, including
 // multiple decimal points at specified positions.
 //
-// decimalPointPlaces is a slice of positions for the decimal points from right
+// decimalPointsPositions is a slice of positions for the decimal points from right
 // to left, since the LSB is the right most digit.
 //
-// E.g. for a 4-digit display, decimalPointPlaces = []uint{1, 2} would look like
+// E.g. for a 4-digit display, decimalPointsPositions = []uint{1, 2} would look like
 // this: 00.0.0
-func (s *SevSeg) SetNumberWithMultipleDecimals(number int32, decimalPoints []uint8) bool {
-	if len(decimalPoints) == 0 {
+func (s *SevSeg) SetNumberWithMultipleDecimals(number int32, decimalPointsPositions []uint8) bool {
+	if len(decimalPointsPositions) == 0 {
 		return false
+	}
+
+	for _, decimalPos := range decimalPointsPositions {
+		if decimalPos > uint8(len(s.digitPins)) {
+			return false
+		}
 	}
 
 	if len(s.segmentPins) < 8 {
@@ -314,19 +318,19 @@ func (s *SevSeg) SetNumberWithMultipleDecimals(number int32, decimalPoints []uin
 		return false
 	}
 
-	for _, decimalPos := range decimalPoints {
+	for _, decimalPos := range decimalPointsPositions {
 		if decimalPos > uint8(len(s.digitPins)) {
 			return false
 		}
 
-		s.updatedDisplay[decimalPos] |= s.getSegmentCode(38) // Decimal point
+		s.updatedDisplay[decimalPos] |= s.getSegmentCode(38) // DECIMAL POINT
 	}
 
 	return true
 }
 
 // SetHex sets the number to be displayed as a hexadecimal value.
-func (s *SevSeg) SetHex(number uint16) bool {
+func (s *SevSeg) SetHex(number uint32) bool {
 	if !s.checkAvailableDigits(int32(number), 16) {
 		return false
 	}
@@ -335,7 +339,7 @@ func (s *SevSeg) SetHex(number uint16) bool {
 
 	position := 0
 	if number == 0 {
-		s.updatedDisplay[position] = s.getSegmentCode(0)
+		s.updatedDisplay[position] = s.getSegmentCode(0) // ZERO
 	} else {
 		for number > 0 && position < len(s.digitPins) {
 			digit := uint8(number) % 16
@@ -351,24 +355,23 @@ func (s *SevSeg) SetHex(number uint16) bool {
 // SetTemperature sets the temperature to be displayed with a ° character.
 func (s *SevSeg) SetTemperature(temperature float32, decimalPlaces uint8) bool {
 	if len(s.digitPins) <= 1 {
-		return false // We need at least 2 digits to display a temperature
+		return false // We need at least 2 digits to display a number
 	}
 
 	scale := int32(1)
-	for range decimalPlaces {
+	for range decimalPlaces + 1 { // Additional *10 for the ° Character
 		scale *= 10
 	}
 
 	scaled := int32(temperature * float32(scale))
 
-	if !s.checkAvailableDigits(scaled>>1, 10) {
+	if !s.checkAvailableDigits(int32(scaled), 10) {
 		return false
 	}
 
-	// Don't display the decimal point if the integer part equals the amount of
-	// digits available.
-	if decimalPlaces > 0 && int32(len(s.digitPins)) > int32(temperature)*10 {
-		if !s.SetNumberWithDecimal(scaled, decimalPlaces) {
+	if decimalPlaces > 0 {
+		// Scale temperature by 10 to reserve space for ° symbol
+		if !s.SetNumberWithDecimal(scaled, decimalPlaces+1) {
 			return false
 		}
 	} else {
@@ -377,7 +380,7 @@ func (s *SevSeg) SetTemperature(temperature float32, decimalPlaces uint8) bool {
 		}
 	}
 
-	s.updatedDisplay[0] = s.getSegmentCode(39) // Degree symbol
+	s.updatedDisplay[0] = s.getSegmentCode(39) // DEGREE
 
 	return true
 }
@@ -386,17 +389,21 @@ func (s *SevSeg) SetTemperature(temperature float32, decimalPlaces uint8) bool {
 // Note that two digits are required to show °C / °F
 func (s *SevSeg) SetTemperatureWithUnit(temperature float32, decimalPlaces uint8, unit tempUnit) bool {
 	if len(s.digitPins) <= 2 {
+		return false // We need at least 3 digits to display a number
+	}
+
+	// Scale temperature by 10 to reserve space for unit symbol (C/F)
+	adjustedDecimalPlaces := decimalPlaces
+	if decimalPlaces > 0 {
+		adjustedDecimalPlaces++ // Move decimal point
+	}
+	if !s.SetTemperature(temperature*10, adjustedDecimalPlaces) {
 		return false
 	}
 
-	if !s.SetTemperature(temperature, decimalPlaces) {
-		return false
-	}
-
-	s.updatedDisplay[1] = s.getSegmentCode(39) // Degree symbol
-	if unit == TemperatureUnit.Celsius {
-		s.updatedDisplay[0] = s.getSegmentCode(12) // 'C'
-	} else {
+	s.updatedDisplay[1] = s.getSegmentCode(39) // DEGREE
+	s.updatedDisplay[0] = s.getSegmentCode(12) // 'C'
+	if unit == TemperatureUnit.Fahrenheit {
 		s.updatedDisplay[0] = s.getSegmentCode(15) // 'F'
 	}
 
@@ -410,7 +417,7 @@ func (s *SevSeg) SetTemperatureWithUnit(temperature float32, decimalPlaces uint8
 //		_|.│_  │_. _│
 //	    4   3   2  1
 //
-// This would equal the bit pattern:
+// Would equal the bit pattern:
 //
 // {0b00001111, 0b10111001, 0b00111001, 0b10001111}
 //
@@ -422,8 +429,8 @@ func (s *SevSeg) SetTemperatureWithUnit(temperature float32, decimalPlaces uint8
 // slice.
 //
 // The segments will be displayed from right to left. This means that if fewer
-// segments are defined than digits, the remaining segments (on the left) will
-// be cleared.
+// segments are defined than digits available, the remaining segments (on the
+// left) will be cleared.
 func (s *SevSeg) SetSegment(pattern []uint8) bool {
 	if len(pattern) > len(s.digitPins) {
 		return false
@@ -446,11 +453,14 @@ func (s *SevSeg) SetText(text string) bool {
 
 	s.scrollPosition = 0
 
-	length := len(text)
-	if len(text) > len(s.digitPins) {
-		length++
+	textLength := len(text)
+	displayWidth := len(s.digitPins)
+	reservedTextLength := textLength
+
+	if textLength > displayWidth {
+		reservedTextLength += displayWidth
 	}
-	s.textPattern = make([]uint8, length)
+	s.textPattern = make([]uint8, reservedTextLength)
 
 	for i, char := range []byte(text) {
 		segment, ok := s.charToSegmentPattern(char)
@@ -460,8 +470,10 @@ func (s *SevSeg) SetText(text string) bool {
 		s.textPattern[i] = segment
 	}
 
-	if len(text) > len(s.digitPins) {
-		s.textPattern[len(text)] = s.getSegmentCode(36) // Blank
+	if textLength > displayWidth {
+		for i := range displayWidth {
+			s.textPattern[textLength+i] = s.getSegmentCode(36) // BLANK
+		}
 	}
 
 	s.updateDisplayFromPatterns()
@@ -471,22 +483,26 @@ func (s *SevSeg) SetText(text string) bool {
 
 // ScrollTextLeft scrolls the text to the left by one digit/segment.
 func (s *SevSeg) ScrollTextLeft() {
-	if len(s.textPattern) <= len(s.digitPins) {
+	patternLength := len(s.textPattern)
+
+	if patternLength <= len(s.digitPins) {
 		return
 	}
 
-	s.scrollPosition = (s.scrollPosition + 1) % (len(s.textPattern) - len(s.digitPins) + 1)
+	s.scrollPosition = (s.scrollPosition + 1) % patternLength
 
 	s.updateDisplayFromPatterns()
 }
 
 // ScrollTextRight scrolls the text to the right by one digit/segment.
 func (s *SevSeg) ScrollTextRight() {
-	if len(s.textPattern) <= len(s.digitPins) {
+	patternLength := len(s.textPattern)
+
+	if patternLength <= len(s.digitPins) {
 		return
 	}
 
-	s.scrollPosition = (s.scrollPosition - 1 + len(s.textPattern) - len(s.digitPins) + 1) % (len(s.textPattern) - len(s.digitPins) + 1)
+	s.scrollPosition = (s.scrollPosition - 1 + patternLength) % patternLength
 
 	s.updateDisplayFromPatterns()
 }
@@ -624,9 +640,9 @@ func (s *SevSeg) clearSegmentPins() {
 // setNumberInitPattern sets the initial pattern for the display when a number
 // is set.
 func (s *SevSeg) setNumberInitPattern() {
-	initPattern := s.getSegmentCode(36) // Blank space
+	initPattern := s.getSegmentCode(36) // BLANK
 	if s.useLeadingZeros {
-		initPattern = s.getSegmentCode(0) // Zero
+		initPattern = s.getSegmentCode(0) // ZERO
 	}
 
 	for i := range s.updatedDisplay {
@@ -688,11 +704,25 @@ func (s *SevSeg) softwarePWM() {
 	s.enabled = brightnessLevel > 0 && (brightnessLevel >= 10 || s.pwmCounter < brightnessLevel)
 }
 
-// updateDisplayFromPatterns updates the display when scrolling the text
+// updateDisplayFromPatterns updates the display buffer from the text pattern.
 func (s *SevSeg) updateDisplayFromPatterns() {
 	displayWidth := len(s.digitPins)
-	for i := 0; i < displayWidth && i+s.scrollPosition < len(s.textPattern); i++ {
-		s.updatedDisplay[displayWidth-1-i] = s.textPattern[i+s.scrollPosition]
+	patternLength := len(s.textPattern)
+
+	if patternLength > displayWidth {
+		for i := 0; i < displayWidth; i++ {
+			patternIndex := (s.scrollPosition + i) % patternLength
+			s.updatedDisplay[displayWidth-1-i] = s.textPattern[patternIndex]
+		}
+	} else {
+		blankPattern := s.getSegmentCode(36) // BLANK
+		for i := 0; i < displayWidth; i++ {
+			if i < patternLength {
+				s.updatedDisplay[displayWidth-1-i] = s.textPattern[i]
+			} else {
+				s.updatedDisplay[displayWidth-1-i] = blankPattern
+			}
+		}
 	}
 }
 
