@@ -4,8 +4,8 @@ A comprehensive TinyGo library for controlling multiplexed 7-segment displays
 with support for both common-anode and common-cathode configurations.
 
 This library is inspired by the popular
-[SevSeg](https://github.com/DeanIsMe/SevSeg/) library for
-Arduino adapted for TinyGo.
+[SevSeg](https://github.com/DeanIsMe/SevSeg/) library for Arduino adapted and
+improved for TinyGo.
 
 ## Installation
 
@@ -43,7 +43,7 @@ The library expects segment pins in this order:
 7. Segment G
 8. Decimal Point (DP)
 
-## Basic Usage
+## Simple example for a 2-digit common-cathode display on an arduino nano
 
 ```go
 package main
@@ -79,7 +79,7 @@ func main() {
 		panic("Failed to create display")
 	}
 
-	if !display.SetNumber(42) {
+	if !display.SetNumber(69) {
 		panic("Failed to set number")
 	}
 
