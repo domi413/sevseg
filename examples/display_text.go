@@ -45,8 +45,6 @@ func main() {
 	display.SetText(messages[messageIndex])
 
 	for {
-		display.Refresh()
-
 		refreshCounter++
 		if refreshCounter >= refreshesPerUpdate {
 			messageIndex++
@@ -57,6 +55,7 @@ func main() {
 			refreshCounter = 0
 		}
 
+		display.Refresh()
 		time.Sleep(1 * time.Millisecond)
 	}
 }

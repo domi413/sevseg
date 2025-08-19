@@ -1,5 +1,5 @@
-// This script displays a counting sequence from -9 to 99 on a 2-digit 7-segment display.
-// Demonstrates basic number display functionality.
+// This script cycles through all displayable letters of the alphabet.
+// Shows which letters can be displayed on a 7-segment display.
 //
 // This configures a 2-digit 7-segment Common Cathode display for arduino-nano
 
@@ -29,7 +29,7 @@ func main() {
 			machine.D10, // G
 			machine.D11, // DP
 		},
-		UseLeadingZeros: true,
+		UseLeadingZeros: false,
 	}
 
 	display, ok := sevseg.NewSevSeg(displayConfig)
@@ -37,25 +37,14 @@ func main() {
 		return
 	}
 
-	counter := int8(-9)
-	refreshCounter := 0
-	refreshesPerUpdate := 200
-
-	display.SetNumber(counter)
-
 	for {
-		display.Refresh()
+		for i := 'A'; i <= 'Z'; i++ {
+			display.SetText(string(i))
 
-		refreshCounter++
-		if refreshCounter >= refreshesPerUpdate {
-			counter++
-			if counter > 99 {
-				counter = -9
+			for range 400 {
+				display.Refresh()
+				time.Sleep(1 * time.Millisecond)
 			}
-			display.SetNumber(counter)
-			refreshCounter = 0
 		}
-
-		time.Sleep(1 * time.Millisecond)
 	}
 }

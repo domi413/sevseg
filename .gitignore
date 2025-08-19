@@ -25,3 +25,5 @@ go.work.sum
 .idea
 .vscode
 .zed
+
+.golangci.yaml
