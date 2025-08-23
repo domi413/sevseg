@@ -8,7 +8,7 @@ import (
 	"machine"
 	"time"
 
-	"github.com/domi413/sevseg/sevseg"
+	"github.com/domi413/sevseg"
 )
 
 func main() {
@@ -30,7 +30,6 @@ func main() {
 			machine.GP10, // G
 			machine.GP11, // DP
 		},
-		PWMType:         sevseg.SoftwarePWM,
 		UseLeadingZeros: false,
 	}
 
