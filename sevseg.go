@@ -425,8 +425,7 @@ func (s *SevSeg) SetTemperatureWithUnit(temperature float32, decimalPlaces uint8
 //
 // (The numbers represent the respective digit)
 //
-// Note that the left most segment is the MSB and is the last pattern in the
-// slice.
+// Note that the left most segment is the last pattern in the slice.
 //
 // The segments will be displayed from right to left. This means that if fewer
 // segments are defined than digits available, the remaining segments (on the
