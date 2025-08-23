@@ -37,7 +37,7 @@ func main() {
 		return
 	}
 
-	counter := int8(-9)
+	counter := int32(-9)
 	refreshCounter := 0
 	refreshesPerUpdate := 200
 
